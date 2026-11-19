@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows OS Portfolio | Interactive Desktop</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome for crisp OS & File Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        /* Custom OS Styling & Scrollbars */
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.78);
+            --glass-dark: rgba(24, 24, 28, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.35);
+            --win-accent: #0067c0;
+            --win-shadow: 0 20px 50px rgba(0, 0, 0, 0.35), 0 0 1px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0f172a;
+        }
+
+        /* Allow text selection inside specific readable areas & inputs */
+        .selectable, input, textarea {
+            user-select: text;
+        }
+
+        /* Wallpapers */
+        .wallpaper-1 {
+            background: radial-gradient(circle at 20% 25%, #3b82f6 0%, transparent 45%),
+                        radial-gradient(circle at 80% 75%, #8b5cf6 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, #0ea5e9 0%, #090d16 100%);
+        }
+        .wallpaper-2 {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+        .wallpaper-3 {
+            background: radial-gradient(circle at 75% 20%, #f43f5e 0%, transparent 45%),
+                        radial-gradient(circle at 20% 80%, #f59e0b 0%, transparent 50%),
+                        linear-gradient(135deg, #1e1b4b 0%, #09090b 100%);
+        }
+        .wallpaper-4 {
+            background: radial-gradient(circle at 30% 30%, #10b981 0%, transparent 45%),
+                        radial-gradient(circle at 75% 70%, #06b6d4 0%, transparent 50%),
+                        linear-gradient(160deg, #022c22 0%, #090d16 100%);
+        }
+
+        /* Mica / Acrylic Glassmorphism */
+        .win-glass {
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(22px) saturate(180%);
+            -webkit-backdrop-filter: blur(22px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .win-glass-dark {
+            background: rgba(20, 22, 28, 0.84);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        /* Desktop Icons */
+        .desktop-icon {
+            width: 84px;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+        }
+        .desktop-icon:hover {
+            background-color: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        .desktop-icon.selected {
+            background-color: rgba(59, 130, 246, 0.32);
+            border-color: rgba(96, 165, 250, 0.6);
+        }
+
+        /* Window Animations & Resizing */
+        .os-window {
+            position: absolute;
+            border-radius: 10px;
+            box-shadow: var(--win-shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            min-width: 310px;
+            min-height: 240px;
+        }
+
+        .os-window.opening {
+            animation: winOpen 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .os-window.minimized {
+            opacity: 0;
+            transform: scale(0.85) translateY(60px);
+            pointer-events: none;
+        }
+
+        .os-window.maximized {
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: calc(100vh - 48px) !important;
+            border-radius: 0 !important;
+        }
+
+        @keyframes winOpen {
+            from {
+                opacity: 0;
+                transform: scale(0.93) translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Start Menu Animation */
+        #start-menu {
+            transition: opacity 0.2s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: bottom center;
+        }
+        #start-menu.hidden-menu {
+            opacity: 0;
+            transform: translateY(20px) scale(0.97);
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbars inside windows */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.45);
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+
+        /* Terminal Font */
+        .font-mono-code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Resize Handle */
+        .resize-handle {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 14px;
+            height: 14px;
+            cursor: nwse-resize;
+            z-index: 20;
+        }
+
+        /* Print styles for Resume */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-resume, #printable-resume * {
+                visibility: visible;
+            }
+            #printable-resume {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="wallpaper-1 relative w-screen h-screen overflow-hidden" id="os-desktop">
+
+    <!-- =====================================================================
+         BOOT / LOCK SCREEN OVERLAY (Optional quick welcome or instant desktop)
+    ====================================================================== -->
+    <div id="boot-screen" class="fixed inset-0 z-[9999] bg-slate-950 flex flex-col items-center justify-center text-white transition-opacity duration-500">
+        <div class="grid grid-cols-2 gap-1.5 w-14 h-14 mb-6 animate-pulse">
+            <div class="bg-sky-400 rounded-tl-sm"></div>
+            <div class="bg-sky-500 rounded-tr-sm"></div>
+            <div class="bg-blue-500 rounded-bl-sm"></div>
+            <div class="bg-blue-600 rounded-br-sm"></div>
+        </div>
+        <h1 class="text-xl font-medium tracking-wide mb-2">Portfolio OS</h1>
+        <p class="text-xs text-slate-400 mb-6">Initializing Desktop Environment...</p>
+        <div class="w-48 h-1 bg-slate-800 rounded-full overflow-hidden">
+            <div id="boot-bar" class="h-full bg-sky-400 w-0 transition-all duration-700 ease-out"></div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         DESKTOP WORKSPACE & ICONS GRID
+    ====================================================================== -->
+    <main id="desktop-area" class="relative w-full h-[calc(100vh-48px)] p-3 sm:p-5 overflow-hidden">
+        
+        <!-- Subtle Center Watermark Widget -->
+        <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-white/15 select-none">
+            <div class="text-5xl sm:text-7xl font-bold tracking-tight" id="bg-hero-name">YOUR NAME</div>
+            <div class="text-sm sm:text-lg tracking-[0.3em] uppercase mt-2 font-medium">Interactive Portfolio OS</div>
+        </div>
+
+        <!-- Desktop Icons Container -->
+        <div id="desktop-icons" class="relative z-10 grid grid-flow-col grid-rows-6 sm:grid-rows-5 gap-2 w-fit max-h-full">
+            <!-- Icons dynamically populated by JS -->
+        </div>
+
+        <!-- Dynamic Windows Container -->
+        <div id="windows-container" class="absolute inset-0 pointer-events-none">
+            <!-- Windows injected here -->
+        </div>
+    </main>
+
+    <!-- =====================================================================
+         RIGHT-CLICK CONTEXT MENU
+    ====================================================================== -->
+    <div id="context-menu" class="hidden fixed z-[9000] w-56 win-glass rounded-xl shadow-2xl py-1.5 text-slate-800 text-xs font-medium border border-white/60">
+        <button onclick="osActions.refreshDesktop()" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-rotate-right w-4 text-center"></i> Refresh
+        </button>
+        <button onclick="osActions.cycleWallpaper()" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-image w-4 text-center"></i> Next Wallpaper
+        </button>
+        <button onclick="osActions.createNewFolder()" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-folder-plus w-4 text-center"></i> New Folder
+        </button>
+        <div class="my-1 border-t border-slate-300/70"></div>
+        <button onclick="openApp('terminal')" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-terminal w-4 text-center"></i> Open in Terminal
+        </button>
+        <button onclick="openApp('personalize')" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-paintbrush w-4 text-center"></i> Personalize
+        </button>
+        <button onclick="openApp('thispc')" class="w-full px-3.5 py-2 text-left hover:bg-blue-500 hover:text-white flex items-center gap-2.5 transition-colors">
+            <i class="fa-solid fa-circle-info w-4 text-center"></i> About Portfolio OS
+        </button>
+    </div>
+
+    <!-- =====================================================================
+         START MENU (Windows 11 Centered Style)
+    ====================================================================== -->
+    <div id="start-menu" class="hidden-menu fixed bottom-14 left-1/2 -translate-x-1/2 z-[8500] w-[94vw] max-w-[540px] win-glass rounded-2xl shadow-2xl border border-white/60 overflow-hidden text-slate-800">
+        <!-- Search Bar -->
+        <div class="p-5 pb-3">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="start-search" oninput="filterStartApps(this.value)" placeholder="Search apps, projects, skills, or commands..." 
+                    class="w-full pl-10 pr-4 py-2.5 bg-white/90 border border-slate-200/80 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
+            </div>
+        </div>
+
+        <!-- Pinned Apps -->
+        <div class="px-6 py-2">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Pinned Applications</span>
+                <button onclick="openApp('projects'); toggleStartMenu(false);" class="text-xs bg-white/80 hover:bg-white px-2.5 py-1 rounded-md border border-slate-200 shadow-sm font-medium">
+                    All Projects &rsaquo;
+                </button>
+            </div>
+            <div id="start-pinned-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-2 max-h-56 overflow-y-auto py-1">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Recommended / Quick Files -->
+        <div class="px-6 py-3 bg-white/40 border-t border-slate-200/60">
+            <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider block mb-2">Recommended</span>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button onclick="openApp('resume'); toggleStartMenu(false);" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/70 text-left transition">
+                    <div class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-file-pdf"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-semibold truncate">Resume_2026.pdf</div>
+                        <div class="text-[11px] text-slate-500">Recently updated</div>
+                    </div>
+                </button>
+                <button onclick="openApp('projects'); toggleStartMenu(false);" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/70 text-left transition">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="text-xs font-semibold truncate">Featured_Projects</div>
+                        <div class="text-[11px] text-slate-500">4 items inside</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Start Menu Footer: Profile & Power -->
+        <div class="px-6 py-3 bg-slate-100/80 border-t border-slate-200/80 flex items-center justify-between">
+            <button onclick="openApp('about'); toggleStartMenu(false);" class="flex items-center gap-2.5 hover:bg-white/80 px-2.5 py-1.5 rounded-lg transition">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center shadow" id="start-avatar">
+                    YN
+                </div>
+                <div class="text-left">
+                    <div class="text-xs font-semibold text-slate-800" id="start-username">Your Name</div>
+                    <div class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> Available for Hire
+                    </div>
+                </div>
+            </button>
+            <div class="flex items-center gap-1">
+                <button onclick="osActions.lockScreen()" title="Lock Screen" class="p-2 hover:bg-white rounded-lg text-slate-700 transition">
+                    <i class="fa-solid fa-lock text-sm"></i>
+                </button>
+                <button onclick="osActions.restartOS()" title="Restart OS" class="p-2 hover:bg-red-500 hover:text-white rounded-lg text-slate-700 transition">
+                    <i class="fa-solid fa-power-off text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         QUICK SETTINGS / SYSTEM TRAY POPOVER
+    ====================================================================== -->
+    <div id="tray-popover" class="hidden fixed bottom-14 right-3 z-[8500] w-72 win-glass rounded-2xl shadow-2xl p-4 border border-white/60 text-slate-800">
+        <div class="grid grid-cols-3 gap-2 mb-4">
+            <button onclick="this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white');" class="bg-blue-600 text-white p-2.5 rounded-xl flex flex-col items-center gap-1 text-[11px] font-medium shadow-sm transition">
+                <i class="fa-solid fa-wifi text-sm"></i> Wi-Fi
+            </button>
+            <button onclick="this.classList.toggle('bg-blue-600'); this.classList.toggle('text-white');" class="bg-blue-600 text-white p-2.5 rounded-xl flex flex-col items-center gap-1 text-[11px] font-medium shadow-sm transition">
+                <i class="fa-brands fa-bluetooth-b text-sm"></i> Bluetooth
+            </button>
+            <button onclick="osActions.cycleWallpaper()" class="bg-white/80 hover:bg-white p-2.5 rounded-xl flex flex-col items-center gap-1 text-[11px] font-medium border border-slate-200 transition">
+                <i class="fa-solid fa-palette text-sm text-indigo-600"></i> Theme
+            </button>
+        </div>
+        <div class="space-y-3 text-xs">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-sun text-slate-500 w-4"></i>
+                <input type="range" min="60" max="110" value="100" oninput="document.body.style.filter = `brightness(${this.value}%)`" class="w-full accent-blue-600 cursor-pointer">
+            </div>
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-volume-high text-slate-500 w-4"></i>
+                <input type="range" min="0" max="100" value="80" class="w-full accent-blue-600 cursor-pointer">
+            </div>
+        </div>
+        <div class="mt-3 pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-600">
+            <span><i class="fa-solid fa-battery-full text-emerald-600 mr-1"></i> 98% Fully Charged</span>
+            <button onclick="openApp('personalize'); toggleTray(false);" class="text-blue-600 font-semibold hover:underline">Settings</button>
+        </div>
+    </div>
+
+    <!-- =====================================================================
+         BOTTOM TASKBAR
+    ====================================================================== -->
+    <footer id="taskbar" class="fixed bottom-0 left-0 right-0 h-12 win-glass border-t border-white/50 z-[8000] px-2 sm:px-3 flex items-center justify-between">
+        
+        <!-- Left: Weather / Status Pill (Hidden on very small screens) -->
+        <div class="hidden md:flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-white/60 transition cursor-pointer" onclick="openApp('about')">
+            <i class="fa-solid fa-code text-blue-600 text-sm"></i>
+            <div class="leading-tight">
+                <div class="text-[11px] font-semibold text-slate-800">Open to Work</div>
+                <div class="text-[10px] text-slate-500">Full-Stack Dev</div>
+            </div>
+        </div>
+
+        <!-- Center: Start Button + Search + Running Apps -->
+        <div class="flex items-center gap-1.5 mx-auto md:mx-0 overflow-x-auto max-w-[68vw] sm:max-w-[75vw] py-1">
+            <!-- Start Button -->
+            <button id="start-btn" onclick="toggleStartMenu()" title="Start" class="w-9 h-9 rounded-lg hover:bg-white/80 active:scale-95 flex items-center justify-center transition shrink-0">
+                <div class="grid grid-cols-2 gap-0.5 w-4 h-4">
+                    <div class="bg-sky-500 rounded-tl-[2px]"></div>
+                    <div class="bg-blue-500 rounded-tr-[2px]"></div>
+                    <div class="bg-blue-600 rounded-bl-[2px]"></div>
+                    <div class="bg-indigo-600 rounded-br-[2px]"></div>
+                </div>
+            </button>
+
+            <!-- Quick Search Trigger -->
+            <button onclick="toggleStartMenu(true); setTimeout(()=>document.getElementById('start-search').focus(), 100);" title="Search" class="hidden sm:flex items-center gap-2 px-3 h-8 rounded-full bg-white/75 hover:bg-white border border-slate-200/80 text-xs text-slate-500 transition shrink-0">
+                <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                <span>Search</span>
+            </button>
+
+            <div class="h-5 w-[1px] bg-slate-300/80 mx-0.5 shrink-0"></div>
+
+            <!-- Open & Pinned Taskbar Icons -->
+            <div id="taskbar-apps" class="flex items-center gap-1">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <!-- Right: System Tray & Live Clock -->
+        <div class="flex items-center gap-1 shrink-0">
+            <button onclick="toggleTray()" class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-white/70 text-slate-700 text-xs transition" title="System Tray">
+                <i class="fa-solid fa-wifi text-[11px]"></i>
+                <i class="fa-solid fa-volume-high text-[11px] hidden sm:inline"></i>
+                <i class="fa-solid fa-battery-three-quarters text-[11px] text-emerald-600"></i>
+            </button>
+
+            <div onclick="toggleTray()" class="px-2 py-1 rounded-lg hover:bg-white/70 text-right cursor-pointer leading-tight transition">
+                <div id="tray-time" class="text-[11px] font-semibold text-slate-800">12:00 PM</div>
+                <div id="tray-date" class="text-[10px] text-slate-600">11/19/2026</div>
+            </div>
+
+            <!-- Show Desktop Sliver -->
+            <button onclick="minimizeAllWindows()" title="Show Desktop" class="w-1.5 h-8 ml-1 border-l border-slate-300 hover:bg-white/80 transition"></button>
+        </div>
+    </footer>
+
+    <!-- =====================================================================
+         TOAST NOTIFICATION CONTAINER (Replaces alert())
+    ====================================================================== -->
+    <div id="toast-container" class="fixed bottom-14 right-4 z-[9500] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- =====================================================================
+         APPLICATION LOGIC & CUSTOMIZABLE PORTFOLIO DATA
+    ====================================================================== -->
+    <script>
+        /**
+         * ===================================================================
+         * 1. CUSTOMIZABLE PORTFOLIO CONFIGURATION (EDIT YOUR DETAILS HERE!)
+         * ===================================================================
+         */
+        const PORTFOLIO_DATA = {
+            name: "S Basumatary",               // <-- Change to your Full Name
+            initials: "AS",                     // <-- Change to your Initials
+            role: "Full-Stack Software Engineer",
+            location: "Bengaluru, India",
+            email: "aarav.dev@example.com",
+            phone: "+91 98765 43210",
+            github: "https://github.com",
+            linkedin: "https://linkedin.com",
+            website: "https://yourportfolio.dev",
+            availability: "Open to Full-Time & Freelance Roles",
+            bio: "Passionate Full-Stack Developer with 4+ years of experience crafting scalable web applications, intuitive user interfaces, and cloud-native architectures. I love turning complex engineering problems into clean, delightful digital experiences.",
+            education: [
+                {
+                    degree: "B.Tech in Computer Science & Engineering",
+                    institution: "National Institute of Technology",
+                    year: "2019 – 2023",
+                    grade: "CGPA: 9.1 / 10"
+                }
+            ],
+            experience: [
+                {
+                    role: "Software Development Engineer II",
+                    company: "TechNova Cloud Systems",
+                    period: "2024 – Present",
+                    highlights: [
+                        "Architected micro-frontend dashboard serving 120k+ daily active users with React & TypeScript.",
+                        "Reduced API latency by 42% through Redis caching and PostgreSQL query optimization."
+                    ]
+                },
+                {
+                    role: "Frontend & UI Engineer",
+                    company: "PixelCraft Studio",
+                    period: "2023 – 2024",
+                    highlights: [
+                        "Built interactive design systems and accessible component libraries in Tailwind CSS.",
+                        "Delivered 15+ responsive SaaS web apps from concept to production."
+                    ]
+                }
+            ],
+            projects: [
+                {
+                    id: "proj-1",
+                    title: "CloudPulse Analytics",
+                    category: "Full-Stack SaaS",
+                    year: "2026",
+                    tech: ["React", "TypeScript", "Node.js", "PostgreSQL", "Tailwind"],
+                    summary: "Real-time infrastructure monitoring & log analytics platform with customizable widgets and instant alerting.",
+                    highlights: [
+                        "Handles 50,000+ events/sec via WebSockets and worker queues.",
+                        "Features role-based access control (RBAC) and dark/light themes."
+                    ],
+                    liveUrl: "https://example.com",
+                    repoUrl: "https://github.com",
+                    color: "from-blue-500 to-cyan-500",
+                    icon: "fa-chart-line"
+                },
+                {
+                    id: "proj-2",
+                    title: "NexusAI Code Assistant",
+                    category: "AI & Developer Tools",
+                    year: "2025",
+                    tech: ["Python", "FastAPI", "Next.js", "Vector DB", "Docker"],
+                    summary: "Context-aware repository assistant that indexes codebases to generate documentation, unit tests, and PR reviews.",
+                    highlights: [
+                        "AST-based chunking for accurate multi-file context retrieval.",
+                        "Reduced PR review turnaround time by 35% for internal teams."
+                    ],
+                    liveUrl: "https://example.com",
+                    repoUrl: "https://github.com",
+                    color: "from-purple-500 to-indigo-600",
+                    icon: "fa-robot"
+                },
+                {
+                    id: "proj-3",
+                    title: "SwiftPay Fintech Wallet",
+                    category: "Web & Mobile App",
+                    year: "2025",
+                    tech: ["React Native", "Express", "MongoDB", "Stripe API"],
+                    summary: "Peer-to-peer payment and expense splitting application with instant QR checkout and automated budget insights.",
+                    highlights: [
+                        "End-to-end encrypted transactions with biometric verification.",
+                        "Interactive monthly spending heatmaps and exportable statements."
+                    ],
+                    liveUrl: "https://example.com",
+                    repoUrl: "https://github.com",
+                    color: "from-emerald-500 to-teal-600",
+                    icon: "fa-wallet"
+                },
+                {
+                    id: "proj-4",
+                    title: "CollabBoard Canvas",
+                    category: "Real-time Collaboration",
+                    year: "2024",
+                    tech: ["HTML5 Canvas", "JavaScript", "WebRTC", "Socket.io"],
+                    summary: "Infinite multiplayer whiteboard supporting sticky notes, freehand sketching, diagrams, and live cursor presence.",
+                    highlights: [
+                        "60 FPS pan/zoom rendering engine with spatial indexing.",
+                        "One-click export to PNG, SVG, and JSON."
+                    ],
+                    liveUrl: "https://example.com",
+                    repoUrl: "https://github.com",
+                    color: "from-amber-500 to-orange-600",
+                    icon: "fa-object-group"
+                }
+            ],
+            skills: {
+                Frontend: [
+                    { name: "HTML5 / CSS3 / Tailwind", level: 96 },
+                    { name: "JavaScript (ES6+) / TypeScript", level: 94 },
+                    { name: "React / Next.js", level: 92 },
+                    { name: "State Management & UI/UX", level: 88 }
+                ],
+                Backend: [
+                    { name: "Node.js / Express", level: 90 },
+                    { name: "Python / FastAPI", level: 85 },
+                    { name: "PostgreSQL / MongoDB / Redis", level: 87 },
+                    { name: "REST & GraphQL APIs", level: 91 }
+                ],
+                "Tools & Cloud": [
+                    { name: "Git / GitHub Actions CI/CD", level: 93 },
+                    { name: "Docker / Kubernetes", level: 80 },
+                    { name: "AWS (EC2, S3, Lambda)", level: 82 },
+                    { name: "Linux / Bash Scripting", level: 86 }
+                ],
+                Languages: [
+                    { name: "TypeScript / JavaScript", level: 95 },
+                    { name: "Python", level: 88 },
+                    { name: "C++ / Java", level: 80 },
+                    { name: "SQL", level: 89 }
+                ]
+            }
+        };
+
+        /**
+         * ===================================================================
+         * 2. SYSTEM APPS & DESKTOP ICONS REGISTRY
+         * ===================================================================
+         */
+        const APPS = {
+            thispc: {
+                id: "thispc",
+                title: "This PC",
+                icon: "fa-desktop",
+                iconColor: "text-sky-400",
+                bgBadge: "bg-sky-500/20",
+                desktop: true,
+                pinned: true,
+                width: 720,
+                height: 480
+            },
+            about: {
+                id: "about",
+                title: "About Me",
+                icon: "fa-folder-open",
+                iconColor: "text-amber-400",
+                bgBadge: "bg-amber-500/20",
+                desktop: true,
+                pinned: true,
+                width: 740,
+                height: 500
+            },
+            projects: {
+                id: "projects",
+                title: "Projects",
+                icon: "fa-folder",
+                iconColor: "text-yellow-400",
+                bgBadge: "bg-yellow-500/20",
+                desktop: true,
+                pinned: true,
+                width: 800,
+                height: 530
+            },
+            skills: {
+                id: "skills",
+                title: "Skills & Specs",
+                icon: "fa-microchip",
+                iconColor: "text-emerald-400",
+                bgBadge: "bg-emerald-500/20",
+                desktop: true,
+                pinned: true,
+                width: 720,
+                height: 490
+            },
+            resume: {
+                id: "resume",
+                title: "Resume.pdf",
+                icon: "fa-file-lines",
+                iconColor: "text-rose-400",
+                bgBadge: "bg-rose-500/20",
+                desktop: true,
+                pinned: true,
+                width: 760,
+                height: 540
+            },
+            contact: {
+                id: "contact",
+                title: "Mail & Contact",
+                icon: "fa-envelope",
+                iconColor: "text-blue-400",
+                bgBadge: "bg-blue-500/20",
+                desktop: true,
+                pinned: true,
+                width: 680,
+                height: 500
+            },
+            terminal: {
+                id: "terminal",
+                title: "Terminal (CMD)",
+                icon: "fa-terminal",
+                iconColor: "text-slate-200",
+                bgBadge: "bg-slate-800",
+                desktop: true,
+                pinned: true,
+                width: 660,
+                height: 430
+            },
+            notepad: {
+                id: "notepad",
+                title: "Notepad",
+                icon: "fa-note-sticky",
+                iconColor: "text-cyan-300",
+                bgBadge: "bg-cyan-500/20",
+                desktop: true,
+                pinned: true,
+                width: 580,
+                height: 420
+            },
+            recycle: {
+                id: "recycle",
+                title: "Recycle Bin",
+                icon: "fa-trash-can",
+                iconColor: "text-slate-300",
+                bgBadge: "bg-slate-500/20",
+                desktop: true,
+                pinned: false,
+                width: 560,
+                height: 380
+            },
+            personalize: {
+                id: "personalize",
+                title: "Personalize",
+                icon: "fa-palette",
+                iconColor: "text-purple-400",
+                bgBadge: "bg-purple-500/20",
+                desktop: false,
+                pinned: true,
+                width: 600,
+                height: 420
+            }
+        };
+
+        // OS State
+        let openWindows = {}; // { appId: { id, minimized, maximized, zIndex } }
+        let topZIndex = 100;
+        let currentWallpaper = 1;
+        let customFoldersCount = 0;
+
+        /**
+         * ===================================================================
+         * 3. INITIALIZATION & BOOT SEQUENCE
+         * ===================================================================
+         */
+        window.onload = function () {
+            // Apply Personalized Names
+            document.getElementById("bg-hero-name").textContent = PORTFOLIO_DATA.name.toUpperCase();
+            document.getElementById("start-username").textContent = PORTFOLIO_DATA.name;
+            document.getElementById("start-avatar").textContent = PORTFOLIO_DATA.initials;
+
+            // Animate Boot Screen
+            const bootBar = document.getElementById("boot-bar");
+            setTimeout(() => { bootBar.style.width = "100%"; }, 80);
+            setTimeout(() => {
+                const bootScreen = document.getElementById("boot-screen");
+                bootScreen.style.opacity = "0";
+                setTimeout(() => {
+                    bootScreen.remove();
+                    // Automatically open "About Me" on first load for immediate engagement
+                    openApp("about");
+                }, 450);
+            }, 850);
+
+            renderDesktopIcons();
+            renderStartPinnedApps();
+            renderTaskbarApps();
+            updateClock();
+            setInterval(updateClock, 1000);
+            setupGlobalListeners();
+        };
+
+        /**
+         * ===================================================================
+         * 4. DESKTOP ICONS, START MENU & TASKBAR RENDERERS
+         * ===================================================================
+         */
+        function renderDesktopIcons() {
+            const container = document.getElementById("desktop-icons");
+            container.innerHTML = "";
+
+            Object.values(APPS).filter(app => app.desktop).forEach(app => {
+                const btn = document.createElement("button");
+                btn.className = "desktop-icon flex flex-col items-center justify-center p-2 rounded-lg border border-transparent text-white text-center group focus:outline-none";
+                btn.dataset.appId = app.id;
+                btn.innerHTML = `
+                    <div class="w-11 h-11 rounded-xl ${app.bgBadge} backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-md group-hover:scale-105 transition-transform">
+                        <i class="fa-solid ${app.icon} ${app.iconColor} text-2xl drop-shadow"></i>
+                    </div>
+                    <span class="text-[11px] font-medium leading-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] line-clamp-2">${app.title}</span>
+                `;
+
+                // Single click selects, Double click (or single tap on mobile) opens
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    document.querySelectorAll(".desktop-icon").forEach(el => el.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    if (window.innerWidth < 768) {
+                        openApp(app.id);
+                    }
+                });
+                btn.addEventListener("dblclick", (e) => {
+                    e.stopPropagation();
+                    openApp(app.id);
+                });
+
+                container.appendChild(btn);
+            });
+        }
+
+        function renderStartPinnedApps(filterText = "") {
+            const grid = document.getElementById("start-pinned-grid");
+            grid.innerHTML = "";
+            const query = filterText.toLowerCase().trim();
+
+            Object.values(APPS).filter(app => {
+                if (!query) return app.pinned;
+                return app.title.toLowerCase().includes(query) || app.id.includes(query);
+            }).forEach(app => {
+                const item = document.createElement("button");
+                item.className = "flex flex-col items-center p-2.5 rounded-xl hover:bg-white/80 transition text-center group";
+                item.onclick = () => {
+                    openApp(app.id);
+                    toggleStartMenu(false);
+                };
+                item.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-slate-800/90 flex items-center justify-center mb-1.5 shadow group-hover:scale-105 transition-transform">
+                        <i class="fa-solid ${app.icon} ${app.iconColor} text-lg"></i>
+                    </div>
+                    <span class="text-[11px] font-medium text-slate-700 truncate w-full">${app.title}</span>
+                `;
+                grid.appendChild(item);
+            });
+        }
+
+        function filterStartApps(val) {
+            renderStartPinnedApps(val);
+        }
+
+        function renderTaskbarApps() {
+            const bar = document.getElementById("taskbar-apps");
+            bar.innerHTML = "";
+
+            // Pinned quick-launch icons + any other currently open apps
+            const taskbarIds = new Set(["about", "projects", "skills", "resume", "contact", "terminal", ...Object.keys(openWindows)]);
+
+            taskbarIds.forEach(id => {
+                const app = APPS[id];
+                if (!app) return;
+                const winState = openWindows[id];
+                const isOpen = Boolean(winState);
+                const isActive = isOpen && !winState.minimized && winState.zIndex === topZIndex;
+
+                const btn = document.createElement("button");
+                btn.title = app.title;
+                btn.className = `relative w-9 h-9 rounded-lg flex items-center justify-center transition shrink-0 ${
+                    isActive ? "bg-white/90 shadow-sm" : isOpen ? "bg-white/50 hover:bg-white/75" : "hover:bg-white/60"
+                }`;
+                btn.onclick = () => handleTaskbarClick(id);
+                btn.innerHTML = `
+                    <i class="fa-solid ${app.icon} ${app.iconColor === 'text-slate-200' ? 'text-slate-800' : app.iconColor} text-base"></i>
+                    ${isOpen ? `<span class="absolute bottom-0.5 ${isActive ? 'w-4 bg-blue-600' : 'w-1.5 bg-slate-500'} h-1 rounded-full transition-all"></span>` : ''}
+                `;
+                bar.appendChild(btn);
+            });
+        }
+
+        function handleTaskbarClick(appId) {
+            const win = openWindows[appId];
+            if (!win) {
+                openApp(appId);
+            } else if (win.minimized) {
+                win.minimized = false;
+                const el = document.getElementById(`win-${appId}`);
+                if (el) el.classList.remove("minimized");
+                focusWindow(appId);
+            } else if (win.zIndex === topZIndex) {
+                minimizeWindow(appId);
+            } else {
+                focusWindow(appId);
+            }
+        }
+
+        /**
+         * ===================================================================
+         * 5. WINDOW MANAGER (OPEN, CLOSE, MINIMIZE, MAXIMIZE, DRAG, RESIZE)
+         * ===================================================================
+         */
+        function openApp(appId, customPayload = null) {
+            const app = APPS[appId];
+            if (!app) return;
+
+            // If already open, restore & focus
+            if (openWindows[appId]) {
+                const winEl = document.getElementById(`win-${appId}`);
+                openWindows[appId].minimized = false;
+                winEl.classList.remove("minimized");
+                if (customPayload && appId === "projects") {
+                    renderProjectDetail(customPayload);
+                }
+                focusWindow(appId);
+                return;
+            }
+
+            topZIndex++;
+            const isMobile = window.innerWidth < 768;
+            const winW = isMobile ? window.innerWidth - 16 : Math.min(app.width, window.innerWidth - 40);
+            const winH = isMobile ? window.innerHeight - 68 : Math.min(app.height, window.innerHeight - 80);
+
+            // Cascade position slightly for each new window
+            const offset = (Object.keys(openWindows).length % 6) * 26;
+            const left = isMobile ? 8 : Math.max(24, Math.floor((window.innerWidth - winW) / 2) + offset - 40);
+            const top = isMobile ? 8 : Math.max(16, Math.floor((window.innerHeight - 48 - winH) / 2) + offset - 30);
+
+            openWindows[appId] = {
+                id: appId,
+                minimized: false,
+                maximized: isMobile,
+                zIndex: topZIndex
+            };
+
+            const winEl = document.createElement("div");
+            winEl.id = `win-${appId}`;
+            winEl.className = `os-window win-glass opening pointer-events-auto ${isMobile ? "maximized" : ""}`;
+            winEl.style.width = `${winW}px`;
+            winEl.style.height = `${winH}px`;
+            winEl.style.left = `${left}px`;
+            winEl.style.top = `${top}px`;
+            winEl.style.zIndex = topZIndex;
+
+            winEl.addEventListener("mousedown", () => focusWindow(appId));
+            winEl.addEventListener("touchstart", () => focusWindow(appId), { passive: true });
+
+            winEl.innerHTML = `
+                <!-- Title Bar -->
+                <div class="win-titlebar h-10 px-3.5 bg-white/70 border-b border-slate-200/80 flex items-center justify-between cursor-move shrink-0" ondblclick="toggleMaximizeWindow('${appId}')">
+                    <div class="flex items-center gap-2.5 overflow-hidden">
+                        <i class="fa-solid ${app.icon} ${app.iconColor === 'text-slate-200' ? 'text-slate-800' : app.iconColor} text-sm"></i>
+                        <span class="text-xs font-semibold text-slate-800 truncate">${app.title}</span>
+                    </div>
+                    <div class="flex items-center gap-1" onmousedown="event.stopPropagation()">
+                        <button onclick="minimizeWindow('${appId}')" title="Minimize" class="w-8 h-7 rounded hover:bg-slate-200/80 flex items-center justify-center text-slate-600 transition">
+                            <i class="fa-solid fa-minus text-[11px]"></i>
+                        </button>
+                        <button onclick="toggleMaximizeWindow('${appId}')" title="Maximize" class="w-8 h-7 rounded hover:bg-slate-200/80 flex items-center justify-center text-slate-600 transition">
+                            <i class="fa-regular fa-square text-[11px]"></i>
+                        </button>
+                        <button onclick="closeWindow('${appId}')" title="Close" class="w-8 h-7 rounded hover:bg-red-500 hover:text-white flex items-center justify-center text-slate-600 transition">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- App Content Body -->
+                <div id="win-body-${appId}" class="flex-1 overflow-auto bg-white/60 text-slate-800 relative">
+                    ${getAppContentHTML(appId, customPayload)}
+                </div>
+
+                <!-- Bottom-Right Resize Handle -->
+                <div class="resize-handle" onmousedown="initResize(event, '${appId}')"></div>
+            `;
+
+            document.getElementById("windows-container").appendChild(winEl);
+            makeWindowDraggable(winEl, appId);
+            initAppScripts(appId, customPayload);
+            renderTaskbarApps();
+        }
+
+        function focusWindow(appId) {
+            if (!openWindows[appId]) return;
+            topZIndex++;
+            openWindows[appId].zIndex = topZIndex;
+            const winEl = document.getElementById(`win-${appId}`);
+            if (winEl) winEl.style.zIndex = topZIndex;
+            renderTaskbarApps();
+        }
+
+        function closeWindow(appId) {
+            const winEl = document.getElementById(`win-${appId}`);
+            if (winEl) {
+                winEl.style.opacity = "0";
+                winEl.style.transform = "scale(0.94)";
+                setTimeout(() => winEl.remove(), 150);
+            }
+            delete openWindows[appId];
+            renderTaskbarApps();
+        }
+
+        function minimizeWindow(appId) {
+            if (!openWindows[appId]) return;
+            openWindows[appId].minimized = true;
+            const winEl = document.getElementById(`win-${appId}`);
+            if (winEl) winEl.classList.add("minimized");
+            renderTaskbarApps();
+        }
+
+        function minimizeAllWindows() {
+            Object.keys(openWindows).forEach(id => minimizeWindow(id));
+        }
+
+        function toggleMaximizeWindow(appId) {
+            const winState = openWindows[appId];
+            const winEl = document.getElementById(`win-${appId}`);
+            if (!winState || !winEl) return;
+
+            winState.maximized = !winState.maximized;
+            winEl.classList.toggle("maximized", winState.maximized);
+            focusWindow(appId);
+        }
+
+        function makeWindowDraggable(winEl, appId) {
+            const titleBar = winEl.querySelector(".win-titlebar");
+            let isDragging = false, startX, startY, origLeft, origTop;
+
+            const startDrag = (clientX, clientY) => {
+                if (openWindows[appId]?.maximized) return;
+                isDragging = true;
+                startX = clientX;
+                startY = clientY;
+                origLeft = winEl.offsetLeft;
+                origTop = winEl.offsetTop;
+                focusWindow(appId);
+            };
+
+            const onDrag = (clientX, clientY) => {
+                if (!isDragging) return;
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+                const newTop = Math.max(0, Math.min(window.innerHeight - 85, origTop + dy));
+                const newLeft = Math.max(-winEl.offsetWidth + 100, Math.min(window.innerWidth - 100, origLeft + dx));
+                winEl.style.top = `${newTop}px`;
+                winEl.style.left = `${newLeft}px`;
+            };
+
+            const stopDrag = () => { isDragging = false; };
+
+            titleBar.addEventListener("mousedown", (e) => startDrag(e.clientX, e.clientY));
+            window.addEventListener("mousemove", (e) => onDrag(e.clientX, e.clientY));
+            window.addEventListener("mouseup", stopDrag);
+
+            titleBar.addEventListener("touchstart", (e) => {
+                if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener("touchmove", (e) => {
+                if (isDragging && e.touches.length === 1) onDrag(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener("touchend", stopDrag);
+        }
+
+        function initResize(e, appId) {
+            e.stopPropagation();
+            if (openWindows[appId]?.maximized) return;
+            const winEl = document.getElementById(`win-${appId}`);
+            const startX = e.clientX;
+            const startY = e.clientY;
+            const startW = winEl.offsetWidth;
+            const startH = winEl.offsetHeight;
+
+            const doResize = (moveEvent) => {
+                const newW = Math.max(320, startW + (moveEvent.clientX - startX));
+                const newH = Math.max(250, startH + (moveEvent.clientY - startY));
+                winEl.style.width = `${newW}px`;
+                winEl.style.height = `${newH}px`;
+            };
+
+            const stopResize = () => {
+                window.removeEventListener("mousemove", doResize);
+                window.removeEventListener("mouseup", stopResize);
+            };
+
+            window.addEventListener("mousemove", doResize);
+            window.addEventListener("mouseup", stopResize);
+        }
+
+        /**
+         * ===================================================================
+         * 6. APPLICATION TEMPLATES (FILE EXPLORERS, TERMINAL, RESUME, ETC.)
+         * ===================================================================
+         */
+        function getAppContentHTML(appId, payload) {
+            switch (appId) {
+                /* ---------------- ABOUT ME FOLDER ---------------- */
+                case "about":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <!-- File Explorer Ribbon / Address Bar -->
+                            <div class="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center gap-2 text-xs text-slate-600">
+                                <i class="fa-solid fa-folder-open text-amber-500"></i>
+                                <span>This PC &rsaquo; Desktop &rsaquo; <strong class="text-slate-800">About Me</strong></span>
+                            </div>
+
+                            <div class="p-5 sm:p-6 overflow-y-auto space-y-6 selectable">
+                                <!-- Profile Hero Card -->
+                                <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 bg-white/90 p-5 rounded-2xl border border-slate-200/80 shadow-sm">
+                                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-2xl font-bold flex items-center justify-center shrink-0 shadow-lg">
+                                        ${PORTFOLIO_DATA.initials}
+                                    </div>
+                                    <div class="text-center sm:text-left flex-1">
+                                        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                                            <h2 class="text-xl font-bold text-slate-900">${PORTFOLIO_DATA.name}</h2>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">
+                                                ${PORTFOLIO_DATA.availability}
+                                            </span>
+                                        </div>
+                                        <p class="text-sm font-medium text-blue-600 mt-0.5">${PORTFOLIO_DATA.role}</p>
+                                        <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i> ${PORTFOLIO_DATA.location}</p>
+                                        <p class="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed">${PORTFOLIO_DATA.bio}</p>
+                                        <div class="flex flex-wrap justify-center sm:justify-start gap-2 mt-4">
+                                            <button onclick="openApp('resume')" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg shadow-sm transition">
+                                                <i class="fa-solid fa-file-lines mr-1.5"></i> View Resume
+                                            </button>
+                                            <button onclick="openApp('contact')" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-medium rounded-lg border border-slate-300 transition">
+                                                <i class="fa-solid fa-paper-plane mr-1.5"></i> Hire Me
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Experience & Education Grid -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-white/85 p-4 rounded-xl border border-slate-200/80">
+                                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                                            <i class="fa-solid fa-briefcase text-blue-600"></i> Experience
+                                        </h3>
+                                        <div class="space-y-4">
+                                            ${PORTFOLIO_DATA.experience.map(exp => `
+                                                <div class="border-l-2 border-blue-500 pl-3">
+                                                    <div class="text-sm font-semibold text-slate-800">${exp.role}</div>
+                                                    <div class="text-xs text-blue-600 font-medium">${exp.company} • ${exp.period}</div>
+                                                    <ul class="mt-1.5 space-y-1 text-xs text-slate-600 list-disc list-inside">
+                                                        ${exp.highlights.map(h => `<li>${h}</li>`).join("")}
+                                                    </ul>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-white/85 p-4 rounded-xl border border-slate-200/80">
+                                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+                                            <i class="fa-solid fa-graduation-cap text-indigo-600"></i> Education
+                                        </h3>
+                                        <div class="space-y-4">
+                                            ${PORTFOLIO_DATA.education.map(edu => `
+                                                <div class="border-l-2 border-indigo-500 pl-3">
+                                                    <div class="text-sm font-semibold text-slate-800">${edu.degree}</div>
+                                                    <div class="text-xs text-slate-600 font-medium">${edu.institution}</div>
+                                                    <div class="text-xs text-slate-500 mt-0.5">${edu.year} | <span class="font-semibold text-emerald-600">${edu.grade}</span></div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+
+                                        <div class="mt-5 pt-4 border-t border-slate-200">
+                                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Quick Folders</h4>
+                                            <div class="flex gap-2">
+                                                <button onclick="openApp('projects')" class="flex-1 p-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-medium text-amber-900 flex items-center justify-center gap-1.5 transition">
+                                                    <i class="fa-solid fa-folder text-amber-500"></i> Projects (4)
+                                                </button>
+                                                <button onclick="openApp('skills')" class="flex-1 p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-medium text-emerald-900 flex items-center justify-center gap-1.5 transition">
+                                                    <i class="fa-solid fa-microchip text-emerald-600"></i> Skills
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- PROJECTS FILE EXPLORER ---------------- */
+                case "projects":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <!-- Explorer Top Toolbar -->
+                            <div class="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center gap-2 text-slate-600">
+                                    <button onclick="renderProjectsGrid()" class="px-2 py-1 rounded hover:bg-slate-200 text-slate-700 font-medium" title="Back to Projects Folder">
+                                        <i class="fa-solid fa-arrow-left"></i>
+                                    </button>
+                                    <span>This PC &rsaquo; Desktop &rsaquo; <strong id="projects-breadcrumb" class="text-slate-800">Projects</strong></span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 hidden sm:inline">${PORTFOLIO_DATA.projects.length} project folders</span>
+                            </div>
+
+                            <!-- Dynamic Projects View Container -->
+                            <div id="projects-view-area" class="flex-1 p-5 overflow-y-auto">
+                                <!-- Filled by renderProjectsGrid() -->
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- SKILLS & SYSTEM SPECS ---------------- */
+                case "skills":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <div class="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+                                <span><i class="fa-solid fa-microchip text-emerald-600 mr-1.5"></i> System Properties &rsaquo; <strong>Developer Technical Stack</strong></span>
+                                <span class="text-[11px] text-emerald-700 font-semibold">All Modules Operational</span>
+                            </div>
+
+                            <div class="p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-4 selectable">
+                                ${Object.entries(PORTFOLIO_DATA.skills).map(([category, items]) => `
+                                    <div class="bg-white/90 p-4 rounded-xl border border-slate-200/80 shadow-sm">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                                <span class="w-2 h-2 rounded-full bg-blue-600"></span> ${category}
+                                            </h3>
+                                            <span class="text-[11px] text-slate-400">${items.length} skills</span>
+                                        </div>
+                                        <div class="space-y-3">
+                                            ${items.map(skill => `
+                                                <div>
+                                                    <div class="flex justify-between text-xs font-medium mb-1">
+                                                        <span class="text-slate-700">${skill.name}</span>
+                                                        <span class="text-blue-600 font-semibold">${skill.level}%</span>
+                                                    </div>
+                                                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                        <div class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full" style="width: ${skill.level}%"></div>
+                                                    </div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    </div>
+                                `).join("")}
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- INTERACTIVE RESUME VIEWER ---------------- */
+                case "resume":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <!-- PDF Viewer Toolbar -->
+                            <div class="px-4 py-2 bg-slate-800 text-white flex items-center justify-between text-xs shrink-0">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-file-pdf text-rose-400"></i>
+                                    <span class="font-medium">${PORTFOLIO_DATA.name.replace(/\s+/g, '_')}_Resume.pdf</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button onclick="window.print()" class="px-3 py-1 bg-blue-600 hover:bg-blue-500 rounded-md font-medium flex items-center gap-1.5 transition">
+                                        <i class="fa-solid fa-print"></i> Print / Save PDF
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Printable Resume Sheet -->
+                            <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-200/70">
+                                <div id="printable-resume" class="max-w-2xl mx-auto bg-white p-6 sm:p-10 rounded-lg shadow-md text-slate-800 selectable space-y-5">
+                                    <div class="border-b-2 border-slate-800 pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+                                        <div>
+                                            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">${PORTFOLIO_DATA.name}</h1>
+                                            <p class="text-sm font-semibold text-blue-600">${PORTFOLIO_DATA.role}</p>
+                                        </div>
+                                        <div class="text-xs text-slate-600 sm:text-right space-y-0.5">
+                                            <div>${PORTFOLIO_DATA.email}</div>
+                                            <div>${PORTFOLIO_DATA.phone} • ${PORTFOLIO_DATA.location}</div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Professional Summary</h2>
+                                        <p class="text-xs leading-relaxed text-slate-700">${PORTFOLIO_DATA.bio}</p>
+                                    </div>
+
+                                    <div>
+                                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Work Experience</h2>
+                                        <div class="space-y-3">
+                                            ${PORTFOLIO_DATA.experience.map(e => `
+                                                <div>
+                                                    <div class="flex justify-between text-xs font-bold text-slate-900">
+                                                        <span>${e.role} — <span class="text-blue-700">${e.company}</span></span>
+                                                        <span class="text-slate-500 font-normal">${e.period}</span>
+                                                    </div>
+                                                    <ul class="mt-1 list-disc list-inside text-xs text-slate-700 space-y-0.5">
+                                                        ${e.highlights.map(h => `<li>${h}</li>`).join("")}
+                                                    </ul>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Key Projects</h2>
+                                        <div class="space-y-2">
+                                            ${PORTFOLIO_DATA.projects.map(p => `
+                                                <div class="text-xs">
+                                                    <span class="font-bold text-slate-900">${p.title}</span>
+                                                    <span class="text-slate-500">(${p.tech.join(", ")})</span>:
+                                                    <span class="text-slate-700">${p.summary}</span>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+                                        <div>
+                                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Education</h2>
+                                            ${PORTFOLIO_DATA.education.map(ed => `
+                                                <div class="text-xs">
+                                                    <div class="font-bold text-slate-800">${ed.degree}</div>
+                                                    <div class="text-slate-600">${ed.institution} (${ed.year})</div>
+                                                </div>
+                                            `).join("")}
+                                        </div>
+                                        <div>
+                                            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Core Technologies</h2>
+                                            <p class="text-xs text-slate-700">
+                                                ${Object.values(PORTFOLIO_DATA.skills).flat().map(s => s.name).join(" • ")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- CONTACT / MAIL CLIENT ---------------- */
+                case "contact":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <div class="px-4 py-2 bg-slate-100/90 border-b border-slate-200 flex items-center justify-between text-xs">
+                                <span class="font-semibold text-slate-700"><i class="fa-solid fa-paper-plane text-blue-600 mr-1.5"></i> New Message to ${PORTFOLIO_DATA.name}</span>
+                                <button onclick="copyEmailAddress()" class="text-blue-600 hover:underline font-medium">
+                                    <i class="fa-regular fa-copy mr-1"></i> Copy Email
+                                </button>
+                            </div>
+
+                            <form onsubmit="handleContactSubmit(event)" class="p-5 flex-1 flex flex-col justify-between gap-3 overflow-y-auto">
+                                <div class="space-y-3">
+                                    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs">
+                                        <span class="text-slate-400 w-14">To:</span>
+                                        <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-medium border border-blue-200">
+                                            ${PORTFOLIO_DATA.name} &lt;${PORTFOLIO_DATA.email}&gt;
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs">
+                                        <label class="text-slate-400 w-14">From:</label>
+                                        <input type="email" required placeholder="your.email@company.com" class="flex-1 bg-transparent focus:outline-none text-slate-800">
+                                    </div>
+                                    <div class="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs">
+                                        <label class="text-slate-400 w-14">Subject:</label>
+                                        <input type="text" required placeholder="Job Opportunity / Project Collaboration" class="flex-1 bg-transparent focus:outline-none text-slate-800">
+                                    </div>
+                                    <textarea required rows="5" placeholder="Hi ${PORTFOLIO_DATA.name.split(' ')[0]}, I explored your Windows OS portfolio and would love to connect..." class="w-full p-3 rounded-xl bg-white/80 border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                                </div>
+
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200">
+                                    <div class="flex items-center gap-2">
+                                        <a href="${PORTFOLIO_DATA.github}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs hover:bg-slate-700 transition">
+                                            <i class="fa-brands fa-github mr-1"></i> GitHub
+                                        </a>
+                                        <a href="${PORTFOLIO_DATA.linkedin}" target="_blank" class="px-2.5 py-1.5 rounded-lg bg-blue-700 text-white text-xs hover:bg-blue-600 transition">
+                                            <i class="fa-brands fa-linkedin mr-1"></i> LinkedIn
+                                        </a>
+                                    </div>
+                                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow transition flex items-center gap-2">
+                                        <i class="fa-solid fa-paper-plane"></i> Send Message
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    `;
+
+                /* ---------------- INTERACTIVE TERMINAL / CMD ---------------- */
+                case "terminal":
+                    return `
+                        <div id="terminal-container" onclick="document.getElementById('cmd-input').focus()" class="h-full bg-[#0c0c0c] text-emerald-400 font-mono-code p-4 text-xs overflow-y-auto selectable flex flex-col">
+                            <div class="text-slate-400 mb-3">
+                                Portfolio OS [Version 11.0.2026]<br>
+                                (c) ${PORTFOLIO_DATA.name}. All rights reserved.<br><br>
+                                Type <span class="text-amber-300 font-semibold">'help'</span> to see available commands.
+                            </div>
+                            <div id="cmd-history" class="space-y-2"></div>
+                            <div class="flex items-center gap-2 mt-2">
+                                <span class="text-sky-400 shrink-0">C:\\Users\\Visitor&gt;</span>
+                                <input id="cmd-input" type="text" autocomplete="off" spellcheck="false" onkeydown="handleTerminalCommand(event)" class="bg-transparent text-emerald-300 focus:outline-none flex-1 font-mono-code">
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- NOTEPAD WITH LOCAL STORAGE ---------------- */
+                case "notepad":
+                    const savedNote = localStorage.getItem("portfolio_os_note") || `Welcome to Portfolio OS Notepad!\n\nFeel free to jot down notes while reviewing ${PORTFOLIO_DATA.name}'s projects.\nYour notes are automatically saved in your browser's local storage.`;
+                    return `
+                        <div class="flex flex-col h-full">
+                            <div class="px-3 py-1.5 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="saveNotepad()" class="px-2.5 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium transition">
+                                        <i class="fa-solid fa-floppy-disk mr-1"></i> Save Note
+                                    </button>
+                                    <button onclick="document.getElementById('notepad-textarea').value=''; saveNotepad();" class="px-2.5 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-slate-700 transition">
+                                        Clear
+                                    </button>
+                                </div>
+                                <span id="notepad-status" class="text-[11px] text-slate-500">Saved locally</span>
+                            </div>
+                            <textarea id="notepad-textarea" oninput="document.getElementById('notepad-status').textContent='Unsaved changes...'" class="flex-1 w-full p-4 bg-white text-slate-800 text-xs sm:text-sm font-mono-code focus:outline-none resize-none leading-relaxed">${savedNote}</textarea>
+                        </div>
+                    `;
+
+                /* ---------------- THIS PC / SYSTEM INFO ---------------- */
+                case "thispc":
+                    return `
+                        <div class="p-5 space-y-5 overflow-y-auto h-full">
+                            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Devices and Drives (2)</div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div onclick="openApp('projects')" class="p-4 rounded-xl bg-white/90 border border-slate-200 hover:border-blue-400 cursor-pointer flex items-center gap-4 shadow-sm transition">
+                                    <i class="fa-solid fa-hard-drive text-3xl text-blue-600"></i>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-slate-800">Local Disk (C:) — Projects</div>
+                                        <div class="w-full h-2 bg-slate-200 rounded-full my-1.5 overflow-hidden">
+                                            <div class="h-full bg-blue-600 w-3/4"></div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500">42.5 GB free of 128 GB</div>
+                                    </div>
+                                </div>
+                                <div onclick="openApp('skills')" class="p-4 rounded-xl bg-white/90 border border-slate-200 hover:border-emerald-400 cursor-pointer flex items-center gap-4 shadow-sm transition">
+                                    <i class="fa-solid fa-server text-3xl text-emerald-600"></i>
+                                    <div class="flex-1">
+                                        <div class="text-xs font-bold text-slate-800">Dev Drive (D:) — Tech Stack</div>
+                                        <div class="w-full h-2 bg-slate-200 rounded-full my-1.5 overflow-hidden">
+                                            <div class="h-full bg-emerald-500 w-4/5"></div>
+                                        </div>
+                                        <div class="text-[11px] text-slate-500">16+ Frameworks Installed</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white/90 p-4 rounded-xl border border-slate-200 space-y-2 text-xs selectable">
+                                <div class="font-bold text-slate-800 text-sm mb-2">Portfolio OS Specifications</div>
+                                <div class="grid grid-cols-3 py-1 border-b border-slate-100"><span class="text-slate-500">Owner</span><span class="col-span-2 font-medium">${PORTFOLIO_DATA.name}</span></div>
+                                <div class="grid grid-cols-3 py-1 border-b border-slate-100"><span class="text-slate-500">Architecture</span><span class="col-span-2 font-medium">64-bit Web Operating System (HTML5 / Tailwind / Vanilla JS)</span></div>
+                                <div class="grid grid-cols-3 py-1"><span class="text-slate-500">Build</span><span class="col-span-2 font-medium">2026.11 Interactive Edition</span></div>
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- RECYCLE BIN ---------------- */
+                case "recycle":
+                    return `
+                        <div class="flex flex-col h-full">
+                            <div class="px-4 py-2 bg-slate-100 border-b border-slate-200 text-xs text-slate-600">
+                                <i class="fa-solid fa-trash-can mr-1.5"></i> Recycle Bin (3 discarded items)
+                            </div>
+                            <div class="p-5 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center text-xs">
+                                <div class="p-3 rounded-xl bg-white/80 border border-slate-200">
+                                    <i class="fa-solid fa-file-code text-2xl text-slate-400 mb-1.5"></i>
+                                    <div class="font-medium truncate">old_portfolio_v1.zip</div>
+                                    <div class="text-[10px] text-slate-400">Deleted 2024</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/80 border border-slate-200">
+                                    <i class="fa-solid fa-bug text-2xl text-rose-400 mb-1.5"></i>
+                                    <div class="font-medium truncate">spaghetti_code.js</div>
+                                    <div class="text-[10px] text-slate-400">Fixed & Refactored</div>
+                                </div>
+                                <div class="p-3 rounded-xl bg-white/80 border border-slate-200">
+                                    <i class="fa-solid fa-mug-hot text-2xl text-amber-600 mb-1.5"></i>
+                                    <div class="font-medium truncate">sleep_schedule.exe</div>
+                                    <div class="text-[10px] text-slate-400">Not Found</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                /* ---------------- PERSONALIZATION SETTINGS ---------------- */
+                case "personalize":
+                    return `
+                        <div class="p-5 space-y-4">
+                            <h3 class="text-sm font-bold text-slate-800">Select Desktop Wallpaper</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                ${[
+                                    { id: 1, name: "Windows Bloom Blue", cls: "wallpaper-1" },
+                                    { id: 2, name: "Midnight Slate", cls: "wallpaper-2" },
+                                    { id: 3, name: "Sunset Aurora", cls: "wallpaper-3" },
+                                    { id: 4, name: "Emerald Matrix", cls: "wallpaper-4" }
+                                ].map(wp => `
+                                    <button onclick="setWallpaper(${wp.id})" class="group rounded-xl overflow-hidden border-2 border-slate-200 hover:border-blue-500 text-left transition shadow-sm bg-white">
+                                        <div class="h-20 w-full ${wp.cls}"></div>
+                                        <div class="p-2 text-xs font-medium text-slate-700 group-hover:text-blue-600">${wp.name}</div>
+                                    </button>
+                                `).join("")}
+                            </div>
+                        </div>
+                    `;
+            }
+        }
+
+        function initAppScripts(appId, payload) {
+            if (appId === "projects") {
+                if (payload) {
+                    renderProjectDetail(payload);
+                } else {
+                    renderProjectsGrid();
+                }
+            }
+            if (appId === "terminal") {
+                setTimeout(() => document.getElementById("cmd-input")?.focus(), 100);
+            }
+        }
+
+        /**
+         * ===================================================================
+         * 7. PROJECTS FOLDER NAVIGATION & DETAIL VIEWER
+         * ===================================================================
+         */
+        function renderProjectsGrid() {
+            const area = document.getElementById("projects-view-area");
+            const crumb = document.getElementById("projects-breadcrumb");
+            if (!area) return;
+            if (crumb) crumb.textContent = "Projects";
+
+            area.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ${PORTFOLIO_DATA.projects.map(proj => `
+                        <div onclick="renderProjectDetail('${proj.id}')" class="group bg-white/90 hover:bg-white p-4 rounded-xl border border-slate-200/90 hover:border-blue-400 shadow-sm hover:shadow-md cursor-pointer transition flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-3 mb-2.5">
+                                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br ${proj.color} text-white flex items-center justify-center shadow">
+                                        <i class="fa-solid ${proj.icon}"></i>
+                                    </div>
+                                    <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">${proj.year}</span>
+                                </div>
+                                <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">${proj.title}</h3>
+                                <p class="text-xs text-slate-500 mt-1 line-clamp-2">${proj.summary}</p>
+                            </div>
+                            <div class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-1.5">
+                                ${proj.tech.slice(0, 3).map(t => `<span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-[10px] font-medium">${t}</span>`).join("")}
+                                ${proj.tech.length > 3 ? `<span class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px]">+${proj.tech.length - 3}</span>` : ""}
+                            </div>
+                        </div>
+                    `).join("")}
+                </div>
+            `;
+        }
+
+        function renderProjectDetail(projectId) {
+            const proj = PORTFOLIO_DATA.projects.find(p => p.id === projectId);
+            const area = document.getElementById("projects-view-area");
+            const crumb = document.getElementById("projects-breadcrumb");
+            if (!proj || !area) return;
+            if (crumb) crumb.innerHTML = `<button onclick="renderProjectsGrid()" class="hover:underline text-blue-600">Projects</button> &rsaquo; ${proj.title}`;
+
+            area.innerHTML = `
+                <div class="bg-white/95 rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm selectable space-y-5">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${proj.color} text-white text-xl flex items-center justify-center shadow-md shrink-0">
+                                <i class="fa-solid ${proj.icon}"></i>
+                            </div>
+                            <div>
+                                <div class="text-[11px] font-semibold uppercase tracking-wider text-blue-600">${proj.category} • ${proj.year}</div>
+                                <h2 class="text-lg font-bold text-slate-900">${proj.title}</h2>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="${proj.liveUrl}" target="_blank" class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Live Demo
+                            </a>
+                            <a href="${proj.repoUrl}" target="_blank" class="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+                                <i class="fa-brands fa-github"></i> Source Code
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Overview</h4>
+                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed">${proj.summary}</p>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Key Engineering Highlights</h4>
+                        <ul class="space-y-1.5 text-xs sm:text-sm text-slate-700 list-disc list-inside">
+                            ${proj.highlights.map(h => `<li>${h}</li>`).join("")}
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Tech Stack</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${proj.tech.map(t => `<span class="px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 text-xs font-medium">${t}</span>`).join("")}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /**
+         * ===================================================================
+         * 8. INTERACTIVE TERMINAL COMMANDS
+         * ===================================================================
+         */
+        function handleTerminalCommand(e) {
+            if (e.key !== "Enter") return;
+            const input = e.target;
+            const rawCmd = input.value.trim();
+            const cmd = rawCmd.toLowerCase();
+            const history = document.getElementById("cmd-history");
+            const container = document.getElementById("terminal-container");
+
+            let response = "";
+            switch (cmd) {
+                case "":
+                    break;
+                case "help":
+                    response = `Available commands:
+  <span class="text-amber-300">about</span>     - Display developer bio & role
+  <span class="text-amber-300">projects</span>  - List featured software projects
+  <span class="text-amber-300">skills</span>    - View categorized technical skills
+  <span class="text-amber-300">contact</span>   - Show email & social handles
+  <span class="text-amber-300">whoami</span>    - Current user session info
+  <span class="text-amber-300">date</span>      - Display current system date & time
+  <span class="text-amber-300">clear</span>     - Clear terminal screen`;
+                    break;
+                case "about":
+                    response = `<span class="text-white font-bold">${PORTFOLIO_DATA.name}</span> — ${PORTFOLIO_DATA.role}\n${PORTFOLIO_DATA.bio}`;
+                    break;
+                case "projects":
+                    response = PORTFOLIO_DATA.projects.map((p, i) => `[${i + 1}] <span class="text-sky-300 font-bold">${p.title}</span> (${p.tech.join(", ")})`).join("\n");
+                    break;
+                case "skills":
+                    response = Object.entries(PORTFOLIO_DATA.skills).map(([cat, list]) => `<span class="text-amber-300">${cat}:</span> ${list.map(s => s.name).join(", ")}`).join("\n");
+                    break;
+                case "contact":
+                    response = `Email: ${PORTFOLIO_DATA.email}\nGitHub: ${PORTFOLIO_DATA.github}\nLinkedIn: ${PORTFOLIO_DATA.linkedin}`;
+                    break;
+                case "whoami":
+                    response = `visitor@portfolio-os (Viewing ${PORTFOLIO_DATA.name}'s Workstation)`;
+                    break;
+                case "date":
+                    response = new Date().toString();
+                    break;
+                case "clear":
+                    history.innerHTML = "";
+                    input.value = "";
+                    return;
+                default:
+                    response = `<span class="text-rose-400">'${rawCmd}' is not recognized as an internal or external command. Type 'help' for commands.</span>`;
+            }
+
+            const entry = document.createElement("div");
+            entry.innerHTML = `
+                <div><span class="text-sky-400">C:\\Users\\Visitor&gt;</span> <span class="text-white">${rawCmd}</span></div>
+                ${response ? `<pre class="whitespace-pre-wrap font-mono-code text-slate-300 mt-1 leading-relaxed">${response}</pre>` : ""}
+            `;
+            history.appendChild(entry);
+            input.value = "";
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /**
+         * ===================================================================
+         * 9. NOTEPAD, CONTACT FORM, CLOCK & DESKTOP ACTIONS
+         * ===================================================================
+         */
+        function saveNotepad() {
+            const text = document.getElementById("notepad-textarea")?.value || "";
+            localStorage.setItem("portfolio_os_note", text);
+            const status = document.getElementById("notepad-status");
+            if (status) status.textContent = "Saved at " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            showToast("Note saved to local storage");
+        }
+
+        function handleContactSubmit(e) {
+            e.preventDefault();
+            e.target.reset();
+            showToast(`Message sent to ${PORTFOLIO_DATA.name}!`);
+        }
+
+        function copyEmailAddress() {
+            const temp = document.createElement("textarea");
+            temp.value = PORTFOLIO_DATA.email;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            temp.remove();
+            showToast(`Copied: ${PORTFOLIO_DATA.email}`);
+        }
+
+        function setWallpaper(num) {
+            currentWallpaper = num;
+            document.body.className = `wallpaper-${num} relative w-screen h-screen overflow-hidden`;
+            showToast(`Wallpaper switched to Theme ${num}`);
+        }
+
+        const osActions = {
+            refreshDesktop() {
+                const icons = document.getElementById("desktop-icons");
+                icons.style.opacity = "0.2";
+                setTimeout(() => { icons.style.opacity = "1"; }, 160);
+                hideContextMenu();
+            },
+            cycleWallpaper() {
+                const next = (currentWallpaper % 4) + 1;
+                setWallpaper(next);
+                hideContextMenu();
+            },
+            createNewFolder() {
+                customFoldersCount++;
+                const container = document.getElementById("desktop-icons");
+                const folderName = customFoldersCount === 1 ? "New Folder" : `New Folder (${customFoldersCount})`;
+                const btn = document.createElement("button");
+                btn.className = "desktop-icon flex flex-col items-center justify-center p-2 rounded-lg border border-transparent text-white text-center group";
+                btn.ondblclick = () => openApp("notepad");
+                btn.innerHTML = `
+                    <div class="w-11 h-11 rounded-xl bg-amber-500/20 backdrop-blur-sm flex items-center justify-center mb-1.5 shadow-md">
+                        <i class="fa-solid fa-folder text-amber-400 text-2xl"></i>
+                    </div>
+                    <span class="text-[11px] font-medium leading-tight drop-shadow">${folderName}</span>
+                `;
+                container.appendChild(btn);
+                hideContextMenu();
+                showToast(`Created "${folderName}" on Desktop`);
+            },
+            lockScreen() {
+                toggleStartMenu(false);
+                showToast("Screen locked — Click anywhere to unlock");
+            },
+            restartOS() {
+                location.reload();
+            }
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById("tray-time").textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            document.getElementById("tray-date").textContent = now.toLocaleDateString();
+        }
+
+        function toggleStartMenu(forceState) {
+            const menu = document.getElementById("start-menu");
+            const tray = document.getElementById("tray-popover");
+            tray.classList.add("hidden");
+
+            const shouldOpen = typeof forceState === "boolean" ? forceState : menu.classList.contains("hidden-menu");
+            menu.classList.toggle("hidden-menu", !shouldOpen);
+        }
+
+        function toggleTray(forceState) {
+            const tray = document.getElementById("tray-popover");
+            const menu = document.getElementById("start-menu");
+            menu.classList.add("hidden-menu");
+
+            const shouldOpen = typeof forceState === "boolean" ? forceState : tray.classList.contains("hidden");
+            tray.classList.toggle("hidden", !shouldOpen);
+        }
+
+        function hideContextMenu() {
+            document.getElementById("context-menu").classList.add("hidden");
+        }
+
+        function showToast(message) {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = "win-glass-dark text-white text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2.5 animate-bounce";
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> <span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = "0";
+                toast.style.transition = "opacity 0.3s ease";
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        function setupGlobalListeners() {
+            // Desktop Right-Click Context Menu
+            document.getElementById("desktop-area").addEventListener("contextmenu", (e) => {
+                if (e.target.closest(".os-window")) return;
+                e.preventDefault();
+                const menu = document.getElementById("context-menu");
+                menu.classList.remove("hidden");
+
+                const menuW = 224, menuH = 220;
+                const x = Math.min(e.clientX, window.innerWidth - menuW - 10);
+                const y = Math.min(e.clientY, window.innerHeight - menuH - 56);
+                menu.style.left = `${x}px`;
+                menu.style.top = `${y}px`;
+            });
+
+            // Close popovers when clicking outside
+            document.addEventListener("click", (e) => {
+                hideContextMenu();
+                if (!e.target.closest("#start-menu") && !e.target.closest("#start-btn")) {
+                    toggleStartMenu(false);
+                }
+                if (!e.target.closest("#tray-popover") && !e.target.closest("#taskbar")) {
+                    toggleTray(false);
+                }
+                if (!e.target.closest(".desktop-icon")) {
+                    document.querySelectorAll(".desktop-icon").forEach(el => el.classList.remove("selected"));
+                }
+            });
+        }
+    </script>
+</body>
+</html>
